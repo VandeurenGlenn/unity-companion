@@ -52,13 +52,14 @@ const getBNBPrice = async () => {
   const provider = walletConnection.provider
 
   const BNBTokenContract = new Contract(BNBTokenAddress, ERC20ABI, provider)
+  const decimals = await BNBTokenContract.decimals()
 
-  let bnbToSell = parseUnits('1', await BNBTokenContract.decimals())
+  let bnbToSell = parseUnits('1', decimals)
   let amountOut
   try {
-    let router = new Contract(pancakeSwapContract, pancakeSwapABI)
+    let router = new Contract(pancakeSwapContract, pancakeSwapABI, provider)
     amountOut = await router.getAmountsOut(bnbToSell, [BNBTokenAddress, USDTokenAddress])
-    amountOut = formatUnits(amountOut[1])
+    amountOut = formatUnits(amountOut[1], decimals)
   } catch (error) {}
   if (!amountOut) return 0
   return amountOut
@@ -76,10 +77,12 @@ const getPrice = async () => {
 
   let amountOut
   try {
-    let router = new Contract(pancakeSwapContract, pancakeSwapABI)
+    let router = new Contract(pancakeSwapContract, pancakeSwapABI, provider)
     amountOut = await router.getAmountsOut(tokensToSell, [tokenAddress, BNBTokenAddress])
-    amountOut = formatUnits(amountOut[1])
-  } catch (error) {}
+    amountOut = formatUnits(amountOut[1], tokenDecimals)
+  } catch (error) {
+    console.log(error)
+  }
 
   if (!amountOut) return 0
   return amountOut * BNBPrice
@@ -123,4 +126,5 @@ var mobileHandlerLib = {
   SendToDevBank: sendToDevBank,
   SendToUser: sendToUser
 }
+
 mergeInto(LibraryManager.library, mobileHandlerLib)
